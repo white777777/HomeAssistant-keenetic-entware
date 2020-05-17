@@ -3,9 +3,10 @@ HomeAssistant is an open source home automation platform. It is able to track an
 HA supports only Windows, Linux, Mac and Raspberry offically. While this project is to install the HomeAssistant on an OpenWRT OS. So that you can run a HomeAssistant on a router without having to run a 24-hours PC or Raspberry.  
 
 ## Hardware Requirements
-Completely installation for HomeAssistant will take nearly 350 MB Flash and 130 MB RAM. More components require more storage.  
+Completely installation for HomeAssistant will take nearly 350 MB Flash and 130 MB RAM. More components require more storage.
+I recommentd to use devices with more than 250 MB RAM and enable swap.
 ## Software Requirements
-Firmware version 3.023 for GL-S1300 or above.
+Entware subsystem should be installed.
 ## Installation
 Install entware subsystem to your router. Connect through SSH.
 Get into the project folder and start the installation. Make sure your device has connected to the Internet.
