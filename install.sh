@@ -39,159 +39,47 @@ if [ "$currentpath" != "/root" ]; then
     exit 0
 fi
 
-#Update the opkg package info
-try=0
-while true
-do
-    try=$((try+1))
-    if [ $try -le 5 ]; then
-        echo -e "\033[33m opkg update...... try $try. \033[0m"
-        opkg update
-        if [ $? -ne 0 ]; then
-            continue
-        else
-            break
-        fi
-    else
-        echo -e "\033[31m ERROR! opkg update failed, check the network connection, exit. \033[0m"
-        exit 0
-    fi
-done
+opkg update
+opkg install python3-pip gcc python3-dev ffi libsodium 
+#opkg install python3-openssl
+pip3 install --upgrade pip
 
-#Install python3.6
-try=0
-while true
-do
-    try=$((try+1))
-    if [ $try -le 5 ]; then
-        echo -e "\033[33m Installing python3.6...... try $try. \033[0m"
-        opkg install python3
-        if [ $? -ne 0 ]; then
-            continue
-        else
-            break
-        fi
-    else
-        echo -e "\033[31m ERROR! Install python3.6 failed, check the network connection, exit. \033[0m"
-        exit 0
-    fi
-done
+OPT=/opt
+USR=$OPT/usr
+INCLUDE=$OPT/include
+PYTHON_INCLUDE=$OPT/include/python3.8
 
-
-#Download and install latest pip for python3
-pipreq=0
-command -v pip > /dev/null 2>&1
-if [ $? -eq 0 ]; then
-    CompareVersion 19.1.1 `pip --version | awk '{print $2}'`
-    if [ $? -eq 0 ]; then
-    pipreq=1
-    fi
-fi
-
-if [ $pipreq -ne 1 ]; then
-    try=0
-    while true
-    do
-        try=$((try+1))
-        if [ $try -le 5 ]; then
-            echo -e "\033[33m Download and install pip...... try $try. \033[0m"
-            curl https://bootstrap.pypa.io/get-pip.py > get-pip.py && python3 get-pip.py
-            if [ $? -ne 0 ]; then
-                rm ./get-pip.py
-                continue
-            else
-                break
-            fi
-        else
-            echo -e "\033[31m ERROR! Install pip failed,  exit. \033[0m"
-            exit 0
-        fi
-    done
-    rm ./get-pip.py
-fi
-
-#Install gcc
-try=0
-while true
-do
-    try=$((try+1))
-    if [ $try -le 5 ]; then
-        echo -e "\033[33m Download and install gcc...... try $try. \033[0m"
-        opkg install gcc
-        if [ $? -ne 0 ]; then
-            continue
-        else
-            break
-        fi
-    else
-        echo -e "\033[31m ERROR! Install gcc failed,  exit. \033[0m"
-        exit 0
-    fi
-done
-
-#Install dependent C library
-opkg install python3-dev
-if [ $? -ne 0 ]; then
-    echo -e "\033[31m ERROR! Install python-dev failed, exit. \033[0m"
-    exit 0
-fi
 echo -e "\033[32m Install C library......libffi \033[0m"
-mkdir -p /usr/include/ffi && \
-cp ./HomeAssistantOnOPENWRT/ffi* /usr/include/ffi && \
-ln -s /usr/lib/libffi.so.6.0.1 /usr/lib/libffi.so
+cp ./ffi* $PYTHON_INCLUDE
+
 echo -e "\033[32m Install C library......libopenssl \033[0m"
-cp -r ./HomeAssistantOnOPENWRT/openssl /usr/include/python3.6/ && \
-ln -s /usr/lib/libcrypto.so.1.0.0 /usr/lib/libcrypto.so && \
-ln -s /usr/lib/libssl.so.1.0.0 /usr/lib/libssl.so
+cp -r ./openssl $PYTHON_INCLUDE/
+
+
 echo -e "\033[32m Install C library......libsodium \033[0m"
-opkg install libsodium
-if [ $? -ne 0 ]; then
-    echo -e "\033[31m ERROR! Install libsodium failed,  exit. \033[0m"
-    exit 0
-fi
-cp ./HomeAssistantOnOPENWRT/sodium.h /usr/include/python3.6/ && \
-cp -r ./HomeAssistantOnOPENWRT/sodium /usr/include/python3.6/ && \
-ln -s /usr/lib/libsodium.so.23.1.0 /usr/lib/libsodium.so
+cp ./sodium.h $PYTHON_INCLUDE/ && \
+cp -r ./sodium $PYTHON_INCLUDE
+
+#ln -s $USR/lib/libffi.so.6.0.1 $USR/lib/libffi.so
+#ln -s $USR/lib/libcrypto.so.1.0.0 $USR/lib/libcrypto.so && \
+#ln -s $USR/lib/libssl.so.1.0.0 $USR/lib/libssl.so
+#ln -s /usr/lib/libsodium.so.23.1.0 $USR/lib/libsodium.so
 
 #Install dependent python module
-try=0
-while true
-do
-    try=$((try+1))
-    if [ $try -le 5 ]; then
-        echo -e "\033[33m Install python module: PyNaCl...... try $try. \033[0m"
-        SODIUM_INSTALL=system pip3 install pynacl
-        if [ $? -ne 0 ]; then
-            rm -rf ./.cache/
-            continue
-        else
-            break
-        fi
-    else
-        echo -e "\033[31m ERROR! Install PyNacl failed,  exit. \033[0m"
-        exit 0
-    fi
-done
 
-try=0
-while true
-do
-    try=$((try+1))
-    if [ $try -le 5 ]; then
-        echo -e "\033[33m Download python module: cryptography...... try $try. \033[0m"
-        curl https://files.pythonhosted.org/packages/07/ca/bc827c5e55918ad223d59d299fff92f3563476c3b00d0a9157d9c0217449/cryptography-2.6.1.tar.gz > cryptography-2.6.1.tar.gz
-        if [ $? -ne 0 ]; then
-            rm ./cryptography-2.6.1.tar.gz
-            rm -rf ./.cache/
-            continue
-        else
-            break
-        fi
-    else
-        echo -e "\033[31m ERROR! Download cryptography failed, exit. \033[0m"
-        exit 0
-    fi
-done
+echo -e "\033[33m Install python module: PyNaCl...... try $try. \033[0m"
+SODIUM_INSTALL=system pip3 install pynacl
+
+echo -e "\033[33m Download python module: cryptography...... try $try. \033[0m"
+curl https://files.pythonhosted.org/packages/07/ca/bc827c5e55918ad223d59d299fff92f3563476c3b00d0a9157d9c0217449/cryptography-2.6.1.tar.gz > cryptography-2.6.1.tar.gz
+if [ $? -ne 0 ]; then
+    rm ./cryptography-2.6.1.tar.gz
+    rm -rf ./.cache/
+    continue
+else
+    break
+fi
+
 echo -e "\033[32m Install python module: cryptography...... \033[0m"
 tar -xzvf cryptography-2.6.1.tar.gz && \
 cd ./cryptography-2.6.1 && \
@@ -204,24 +92,15 @@ fi
 rm -rf ./cryptography-2.6.1*
 
 #Install Home Assistant
-try=0
-while true
-do
-    try=$((try+1))
-    if [ $try -le 5 ]; then
-        echo -e "\033[33m Install HomeAssistant...... try $try. \033[0m"
-        python3 -m pip install homeassistant
-        if [ $? -ne 0 ]; then
-            rm -rf ./.cache/
-            continue
-        else
-            break
-        fi
-    else
-        echo -e "\033[33m Install HomeAssistant failed, exit. \033[0m"
-        exit 0
-    fi
-done
+echo -e "\033[33m Install HomeAssistant...... try $try. \033[0m"
+python3 -m pip install homeassistant
+if [ $? -ne 0 ]; then
+    rm -rf ./.cache/
+    continue
+else
+    break
+fi
+
 #Config the homeassistant
 mkdir -p ./.homeassistant
 cp ./HomeAssistantOnOPENWRT/configuration/* ./.homeassistant/
